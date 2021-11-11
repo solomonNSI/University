@@ -1,0 +1,232 @@
+CS 224
+Lab no 2
+Section 5
+Hanyyev Suleyman
+21901009
+
+Here is my part 1 of the lab:
+# Lab 2 Part 1
+# Hanyyev Suleyman, 21901009
+# Feb 21, Process Static Array
+
+.data
+	array: .word 0, 5 , -5
+	arrsize: .word 3
+
+	line: 	    .asciiz "\n"
+	message:    .asciiz "Elements of the array are:\n"
+	symmetric:	.asciiz "\n The above array is symmetric"
+	not_symmetric:	.asciiz "\n The above array is not symmetric"
+
+.text
+
+main:
+	la $a0, array    #$s0 = array address
+	lw $a1, arrsize  #$s1 = arrsize
+
+	jal printArray
+
+	jal CheckSymmetric
+
+	jal FindMinMax
+
+	quit:	#Syscall to end the program
+	li $v0, 10
+	syscall
+
+
+printArray:
+	addi $s2, $0, 0		# i = 0
+
+	addi $sp, $sp, -4	#add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		# to print the elements
+
+	add $s4, $s4, $a0	#copy the address of the array
+
+	#Elements of the array are:
+	li $v0, 4
+	la $a0, message
+	syscall
+
+	loop:
+	slt $s5, $s2, $a1
+	beq $s5, $0, exit
+
+	sll $s5,$s2, 2		# $s5 = i*4 for byte address
+	add $s5, $s5, $s4	#address of array[i]
+
+	lw $s3, 0($s5)
+
+	#prints current number
+	li $v0,1
+	move $a0, $s3
+	syscall
+
+	#prints new line
+	li $v0, 4
+	la $a0, line
+	syscall
+
+	addi $s2, $s2, 1
+	j loop
+
+	exit:
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+CheckSymmetric:
+	addi $s0, $0, 0		     		# i = 0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s1, $s1, $a0	     		# copy the address of the array to $s1
+				     		# lets use s3 for middle index of the array
+	div $s2, $a1, 2 	        	# s2 = size/2
+
+	sll $s3, $a1, 2		    		# s3 will be the last index of the array
+
+	check_forSymmetry:
+
+		slt $s4, $0, $s2
+		beq $s4, $0, isSymmetric 	# when middle reaches 0 after loop, it means its symmetric
+
+		sll $s4, $s0, 2
+		add $s4, $s4, $s1		# $s4 will contain the address of first element
+		add $s7, $s3, $s1 		# $s7 will contain the address of the last element
+		lw $s5 , 0($s4)
+		lw $s6,  0($s7)
+
+		bne $s5, $s6, isNotSymmetric
+
+		addi $s0, $s0, 1  		# increment the first index
+		addi $s3, $s3, -4 		# decrement the last index
+		addi $s2, $s2, -1 		# decrement the middle
+		j check_forSymmetry
+
+	isSymmetric:
+	# 	li $v0, 1
+	#	I decided to print it to the console
+
+	 	li $v0, 4
+	 	la $a0, symmetric
+	 	syscall
+	 	j done
+
+	isNotSymmetric:
+	# 	li $v0, 0
+	#	I decided to print it to the console
+		li $v0, 4
+		la $a0, not_symmetric
+		syscall
+		j done
+	done:
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+FindMinMax:
+	addi $s0, $0, 0				# initialize s0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s2, $0, $a0
+
+	lw $s6, 0($a0)				#initialize min and max
+	lw $s7, 0($a0)
+
+	loop2:
+	slt $s1, $s0, $a1
+	beq $s1, $0, exit2
+
+	sll $s5,$s0, 2				# $s5 = i*4 for byte address
+	add $s5, $s5, $s2			# address of array[i]
+
+	lw $s3, 0($s5)
+
+	checkMin:
+	slt $s4, $s3, $s6
+	bne $s4, $0, changeMin
+
+	checkMax:
+	slt $t4, $s6, $s3
+	bne $t4, $zero, changeMax
+
+	allchecked:
+	addi $s0, $s0, 1
+	j loop2
+
+	changeMax:
+	add $s6, $0, $s3
+	j allchecked
+
+	changeMin:
+	add $s7, $0, $s3
+	j checkMax
+
+	exit2:
+	add $v0, $s6, $0
+	add $v1, $s7, $0
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+
+
+
+
+    Now is the second part:
+
+    # Suleyman Hanyyev
+# Lab 2 part 2
+# @date 21/02/2021
+# program that reverses the bits of an integer
+.data
+	line: .asciiz "\n"
+	prompt: .asciiz "Please Enter the Integer"
+	result: .asciiz "The result I calculated is: "
+.text
+main:
+	li $v0,4
+	la $a0,prompt
+	syscall
+
+	# Takes the input from the user
+	li $v0, 5
+	syscall
+	add $s0, $v0, $0	# take an int from user
+
+	addi $s1, $0, 0		# initialize the result
+	addi $t0, $0, 0		# i = 0
+
+	loop:
+	beq $t0,31,exit
+	sll $s1, $s1, 1		#shift left logical the result
+
+	and $t1, $s0, 1		# if( n&1) == 1 do increment the result
+	bne $t1, 1, continue	# otherwise skip it
+	addi $s1, $s1, 1
+
+	continue:		# shift right logical the int from the user
+	srl $s0, $s0, 1
+	addi $t0, $t0, 1	# increment counter
+
+	j loop
+
+	exit:
+	li $v0,4
+	la $a0, result
+	syscall
+
+	li $v0, 1
+	move $a0, $s1
+	syscall
+
+	quit:
+	li $v0, 10
+	syscall
+
+Thank you for your time!

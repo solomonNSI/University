@@ -1,0 +1,179 @@
+CS224
+Lab 3
+Section 5
+Suleyman Hanyyev
+21901009
+
+# CS224 section 5
+# lab 3 part 1
+# Suleyman Hanyyev
+
+.data
+	newline: .asciiz "\n"
+	mainPrint: .asciiz "\nThe count of add and lw instructions in the main: "
+
+	subprogramPrint: .asciiz "\nThe count of add and lw instructions in the subprogram: "
+.text
+
+# Initialization of base address and final
+start:
+	la $a0, start
+	la $a1, done
+	
+# I provided some sample instructions in the main
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	add $s0, $s0, $0
+	add $s1, $s1, $0
+	lw $ra, 0($sp)
+done:
+
+# jump to instructionCount
+	jal instructionCount
+	
+	add $t0, $0, $v0
+	
+# Print the number in main
+	li $v0, 4
+	la $a0, mainPrint
+	syscall
+	
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	
+	li $v0, 4
+	la $a0, newline
+	syscall
+# Part 2, count the instructions in the subprogram
+	
+	la $a0, instructionCount
+	la $a1, return
+	
+	jal instructionCount
+	
+	add $t0, $0, $v0
+	
+# Print the number in subprogram
+	li $v0, 4
+	la $a0, subprogramPrint
+	syscall
+	
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	
+	quit:
+	li $v0, 10
+	syscall
+	
+instructionCount:
+
+	addi $sp, $sp, -16
+	sw $s0, 0($sp)
+	sw $s2, 4( $sp)
+	sw $s5, 8($sp)
+	sw $ra, 12($sp)
+	add $s2, $0, $0
+	add $s5, $0, $0
+	
+	loop:
+	beq $a0, $a1, jumpnext
+	
+	lw $s0, 0($a0)
+	srl $s0, $s0, 26
+ 	or $s0, $s0, 0
+	bnez $s0, continue
+	addi $s2, $s2, 1
+	j skip
+	
+	continue:
+	lw $s0, 0($a0)
+	srl $s0, $s0, 26
+	
+	or $s0, $s0, 35
+	
+	bne $s0, 35, skip
+	addi $s2, $s2, 1
+	
+	skip:
+	addi $a0, $a0, 4
+	j loop
+	jumpnext:
+	add $v0, $0, $s2
+
+# Unload the stack
+	lw $s0, 0($sp)
+	lw $s2, 4($sp)
+	lw $s5, 8($sp)
+	lw $ra, 12($sp)
+	addi $sp, $sp, 16
+	return:
+	
+	jr $ra
+
+
+    Now part 2:
+    # CS224 section 5
+# lab3 part 2
+# recursive Division by subtracting
+
+.data
+	newline: 	.asciiz "\n"
+	prompt:		.asciiz "Please Enter the numbers one by one:  "
+	continue: 	.asciiz "\nPress 1 if you want to continue, or others if you want to quit:   "
+.text
+main:
+	li $v0, 4
+	la $a0, prompt
+	syscall
+
+	li $v0, 5
+	syscall
+	add $a0, $0, $v0
+	li $v0, 5
+	syscall
+	add $a1, $0, $v0
+
+	jal recursiveDivision
+	add $t0, $v0, $0
+	li $v0,1
+	add $a0, $zero, $t0
+	syscall
+
+	li $v0, 4
+	la $a0, continue
+	syscall
+
+	li $v0, 5
+	syscall
+	beq $v0, 1, main
+	quit:
+	li $v0, 10
+	syscall
+
+# Subprogram, divides the first number ( $a0) by second ($a1) by subtracting
+recursiveDivision:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	slt $s0, $a0, $a1
+	bnez $s0, basecase
+
+	sub $a0, $a0, $a1
+
+	jal recursiveDivision
+	addi $v0, $v0, 1 # v0 will have the quotient
+
+	done:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+# when the iteration is finished, it will return to main
+basecase:
+	addi $v0, $0, 0
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+Thank you for your time!

@@ -1,0 +1,200 @@
+#Lab 1 Part 3
+#Hanyyev Suleyman, 21901009
+#Feb 14, Finding max min avg values of an array
+
+.data
+
+	array: .word 0, 5 , -5
+	arrsize: .word 3
+	
+
+	avg: .word 0   #initializing avg to 0
+	
+	prompt_pos: .asciiz "Position(hex)       Value(int)"
+	prompt_min: .asciiz "\n Min value of the array: "
+	prompt_max: .asciiz "\n Max value of the array: "
+	prompt_avg: .asciiz "\n Avg value of the array: "
+	line: 	    .asciiz "\n"
+	space:      .asciiz "             "
+.text
+
+main:
+
+	la $s0, array    #$s0 = array address
+	lw $s1, arrsize  #$s1 = arrsize
+	
+	lw $t0, array($zero)     #$t0 = min
+	lw $t1, array($zero)     #$t1 = max
+	lw $t2, avg     #$t2 = avg
+	
+	addi $t3,$zero, 0    #$t3 will be used for index in the for loop
+	
+loop:
+	beq $t3, 12, exit
+	
+	lw $t6, array($t3)  #$t6 will hold the value of elements in the array
+	
+	slt $t4, $t6, $t0
+	bne $t4, $zero, changeMin 
+	
+	checkMax:
+	slt $t4, $t1, $t6
+	bne $t4, $zero, changeMax
+	
+	addAvg:
+	add $t2, $t2,$t6
+	
+	addi $t3, $t3, 4
+	
+	j loop
+	exit:
+	addi $t6, $zero, 0  #clean out $t6 for further use
+	
+	computeAvg:
+	addi $t6, $zero, 6
+	div $t2, $t6
+	mflo $s1   #$s1 will be used for keeping the average
+	
+	printAllElements:
+	li $v0, 4
+	la $a0,prompt_pos
+	syscall
+	
+	li $v0, 4
+	la $a0, line
+	syscall
+	
+	addi $t5, $zero, 0
+while:   			#while loop to print all the elements
+	beq $t5, 24, exit2
+	
+	#prints current number
+	li $v0,34
+	add $a0, $zero, $t5	
+	syscall
+	
+	#prints some space , cosmetic
+	li $v0, 4
+	la $a0, space
+	syscall
+	
+	lw $t6, array($t5)
+	
+	#prints current number
+	li $v0,1
+	move $a0, $t6
+	syscall	
+	
+	addi $t5, $t5, 4
+	
+	#prints new line
+	li $v0, 4
+	la $a0, line
+	syscall
+		
+	j while
+		
+	exit2:
+	
+	print:
+	li $v0, 4		#printing min value of the array
+	la $a0, prompt_min	#first the prompt
+	syscall
+	
+	li $v0,1		#now the value
+	move $a0, $t0
+	syscall
+	
+	li $v0,4		#printing max value of the array
+	la $a0, prompt_max	#first the prompt
+	syscall
+	
+	li $v0,1
+	move $a0, $t1
+	syscall
+	
+	li $v0,4		#printing max value of the array
+	la $a0, prompt_avg	#first the prompt
+	syscall
+	
+	li $v0,1
+	move $a0, $s1
+	syscall
+	
+	quit:	#Syscall to end the program
+	li $v0, 10
+	syscall
+	
+	
+changeMax:
+lw $t1, array($t3)
+j addAvg
+	
+changeMin:
+lw $t0, array($t3)
+j checkMax
+
+
+
+Here is part 4
+
+
+
+
+
+#This is the last part of the lab 1
+#@author Suleyman Hanyyev
+#Program that computes mathematical expression given below
+
+.data
+	equation: .asciiz "The equation that i calculate is:\n A = (B % C + D) / B * (C - D)"
+	prompt:	.asciiz "\nPlease Enter The Values of B, C and D one by one \n"
+	answer: .asciiz "\nThe answer to your expression is: "
+	
+.text
+
+	li $v0, 4
+	la $a0, equation	#Print the entering prompt
+	syscall	
+
+	li $v0, 4
+	la $a0, prompt		#Print the entering prompt
+	syscall	
+	
+	#Get the values from the user	
+	li $v0,5
+	syscall
+	add $s0, $v0, 0 	#$s0 = B
+	
+	li $v0,5
+	syscall 
+	add $s1,$v0,0 		#$s1 = C
+	
+	li $v0,5
+	syscall
+	add $s2, $v0, 0 	#$s2 = D
+
+	div $s0, $s1		#divide B by C and put the remainder
+	mfhi $t0		#into $t0
+	
+	add $t3, $t0, $s2	#B % C + D, in $t3
+	
+	div $t3, $s0		#$t3 divide by B,
+	mflo $t1		#result is in $t1
+	
+	sub $t2, $s1, $s2	#(C-D) = $t2
+	mult $t1, $t2		# the final multiplication, into $t3
+	mflo $t3
+	
+	printAnswer:
+	li $v0,4
+	la $a0, answer
+	syscall
+	
+	li $v0, 1
+	move $a0, $t3
+	syscall
+	
+	quit:			# Syscall to end the program
+	li $v0, 10
+	syscall

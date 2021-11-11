@@ -1,0 +1,643 @@
+CS 224
+Lab 2
+Section 5
+Suleyman Hanyyev
+21901009
+
+TA asked me to upload parts 1 and 2 as well
+
+CS 224
+Lab no 2
+Section 5
+Hanyyev Suleyman
+21901009
+
+Here is my part 1 of the lab:
+# Lab 2 Part 1
+# Hanyyev Suleyman, 21901009
+# Feb 21, Process Static Array
+
+.data
+	array: .word 0, 5 , -5
+	arrsize: .word 3
+
+	line: 	    .asciiz "\n"
+	message:    .asciiz "Elements of the array are:\n"
+	symmetric:	.asciiz "\n The above array is symmetric"
+	not_symmetric:	.asciiz "\n The above array is not symmetric"
+
+.text
+
+main:
+	la $a0, array    #$s0 = array address
+	lw $a1, arrsize  #$s1 = arrsize
+
+	jal printArray
+
+	jal CheckSymmetric
+
+	jal FindMinMax
+
+	quit:	#Syscall to end the program
+	li $v0, 10
+	syscall
+
+
+printArray:
+	addi $s2, $0, 0		# i = 0
+
+	addi $sp, $sp, -4	#add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		# to print the elements
+
+	add $s4, $s4, $a0	#copy the address of the array
+
+	#Elements of the array are:
+	li $v0, 4
+	la $a0, message
+	syscall
+
+	loop:
+	slt $s5, $s2, $a1
+	beq $s5, $0, exit
+
+	sll $s5,$s2, 2		# $s5 = i*4 for byte address
+	add $s5, $s5, $s4	#address of array[i]
+
+	lw $s3, 0($s5)
+
+	#prints current number
+	li $v0,1
+	move $a0, $s3
+	syscall
+
+	#prints new line
+	li $v0, 4
+	la $a0, line
+	syscall
+
+	addi $s2, $s2, 1
+	j loop
+
+	exit:
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+CheckSymmetric:
+	addi $s0, $0, 0		     		# i = 0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s1, $s1, $a0	     		# copy the address of the array to $s1
+				     		# lets use s3 for middle index of the array
+	div $s2, $a1, 2 	        	# s2 = size/2
+
+	sll $s3, $a1, 2		    		# s3 will be the last index of the array
+
+	check_forSymmetry:
+
+		slt $s4, $0, $s2
+		beq $s4, $0, isSymmetric 	# when middle reaches 0 after loop, it means its symmetric
+
+		sll $s4, $s0, 2
+		add $s4, $s4, $s1		# $s4 will contain the address of first element
+		add $s7, $s3, $s1 		# $s7 will contain the address of the last element
+		lw $s5 , 0($s4)
+		lw $s6,  0($s7)
+
+		bne $s5, $s6, isNotSymmetric
+
+		addi $s0, $s0, 1  		# increment the first index
+		addi $s3, $s3, -4 		# decrement the last index
+		addi $s2, $s2, -1 		# decrement the middle
+		j check_forSymmetry
+
+	isSymmetric:
+	# 	li $v0, 1
+	#	I decided to print it to the console
+
+	 	li $v0, 4
+	 	la $a0, symmetric
+	 	syscall
+	 	j done
+
+	isNotSymmetric:
+	# 	li $v0, 0
+	#	I decided to print it to the console
+		li $v0, 4
+		la $a0, not_symmetric
+		syscall
+		j done
+	done:
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+FindMinMax:
+	addi $s0, $0, 0				# initialize s0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s2, $0, $a0
+
+	lw $s6, 0($a0)				#initialize min and max
+	lw $s7, 0($a0)
+
+	loop2:
+	slt $s1, $s0, $a1
+	beq $s1, $0, exit2
+
+	sll $s5,$s0, 2				# $s5 = i*4 for byte address
+	add $s5, $s5, $s2			# address of array[i]
+
+	lw $s3, 0($s5)
+
+	checkMin:
+	slt $s4, $s3, $s6
+	bne $s4, $0, changeMin
+
+	checkMax:
+	slt $t4, $s6, $s3
+	bne $t4, $zero, changeMax
+
+	allchecked:
+	addi $s0, $s0, 1
+	j loop2
+
+	changeMax:
+	add $s6, $0, $s3
+	j allchecked
+
+	changeMin:
+	add $s7, $0, $s3
+	j checkMax
+
+	exit2:
+	add $v0, $s6, $0
+	add $v1, $s7, $0
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+
+
+
+
+
+
+    Now is the second part:
+
+    # Suleyman Hanyyev
+# Lab 2 part 2
+# @date 21/02/2021
+# program that reverses the bits of an integer
+.data
+	line: .asciiz "\n"
+	prompt: .asciiz "Please Enter the Integer"
+	result: .asciiz "The result I calculated is: "
+.text
+main:
+	li $v0,4
+	la $a0,prompt
+	syscall
+
+	# Takes the input from the user
+	li $v0, 5
+	syscall
+	add $s0, $v0, $0	# take an int from user
+
+	addi $s1, $0, 0		# initialize the result
+	addi $t0, $0, 0		# i = 0
+
+	loop:
+	beq $t0,31,exit
+	sll $s1, $s1, 1		#shift left logical the result
+
+	and $t1, $s0, 1		# if( n&1) == 1 do increment the result
+	bne $t1, 1, continue	# otherwise skip it
+	addi $s1, $s1, 1
+
+	continue:		# shift right logical the int from the user
+	srl $s0, $s0, 1
+	addi $t0, $t0, 1	# increment counter
+
+	j loop
+
+	exit:
+	li $v0,4
+	la $a0, result
+	syscall
+
+	li $v0, 1
+	move $a0, $s1
+	syscall
+
+	quit:
+	li $v0, 10
+	syscall
+
+Thank you for your time!
+
+Here are the remaining main parts
+
+Part 3:
+# Lab 2 Part 3
+# Hanyyev Suleyman, 21901009
+# Feb 21, Process Static Array
+
+.data
+	prompt:		.asciiz "Please Enter the length of the array:   "
+
+	line: 	    .asciiz "\n"
+	message:    .asciiz "Elements of the array are:\n"
+	symmetric:	.asciiz "\n The above array is symmetric"
+	not_symmetric:	.asciiz "\n The above array is not symmetric"
+	min: 		.asciiz "\n Smallest element of the array:  "
+	max:		.asciiz "\n Biggest element of the array:  "
+	empty:		.asciiz "\ No elements in the array, quitting the program"
+.text
+main:
+	jal getArray
+
+	jal CheckSymmetric
+
+	jal FindMinMax
+
+	add $t0, $0, $v0	# temp save the elements in v0
+	add $t1, $0, $a0	# temp save the elements in a0
+
+	li $v0,4
+	la $a0,min
+	syscall
+
+	add $a0, $0, $v1
+	li $v0,1
+	syscall
+
+	li $v0,4
+	la $a0,max
+	syscall
+
+	add $a0, $0, $t0
+	li $v0,1
+	syscall
+
+	quit:	#Syscall to end the program
+	li $v0, 10
+	syscall
+
+getArray:
+	addi $sp, $sp, -24
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	sw $s2, 8($sp)
+	sw $s3, 12($sp)
+	sw $s4, 16($sp)
+	sw $s5, 20($sp)
+
+	li $v0, 4		# please enter the number
+	la $a0, prompt
+	syscall
+
+	li $v0, 5		# user enters the number
+	syscall
+	add $a1, $v0, $0	# a1 will be passed to printArray
+	beq $a1, $0, emptyArray
+	add $a0, $v0, $0
+
+	li $v0, 9
+	syscall
+	add $a0, $v0, $0	# a0 has the base address
+
+	add $s0, $a0, $0	# base address
+	add $s2, $0, $0		# i = 0
+
+	userinput:
+	slt $s3, $s2, $a1
+	beq $s3, $0, userinputdone
+
+	sll $s4, $s2,2
+	add $s4,$s4,$s0
+
+	li $v0, 5
+	syscall
+
+	sw $v0, 0($s4)
+	addi $s2, $s2, 1
+	j userinput
+
+	userinputdone:
+
+	add $a0, $s0, $0	#both a0 and v0 now have base addresses
+	add $v0, $0, $a0	# here a1 must have the size of the array
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+
+	jal printArray
+
+printArray:
+	add $s2, $0, $0		# i = 0
+
+	addi $sp, $sp, -8	#add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		# to print the elements
+	sw $v0, 4($sp)
+
+	add $s4, $0, $a0	#copy the address of the array
+
+	#Elements of the array are:
+	li $v0, 4
+	la $a0, message
+	syscall
+
+	loop:
+	slt $s5, $s2, $a1
+	beq $s5, $0, exitPrintArray
+
+	sll $s5,$s2, 2		# $s5 = i*4 for byte address
+	add $s5, $s5, $s4	#address of array[i]
+
+	lw $s3, 0($s5)
+
+	#prints current number
+	li $v0,1
+	move $a0, $s3
+	syscall
+
+	#prints new line
+	li $v0, 4
+	la $a0, line
+	syscall
+
+	addi $s2, $s2, 1
+	j loop
+
+	exitPrintArray:
+	lw $a0, 0($sp)
+	lw $v0, 4($sp)
+	lw $ra, 8($sp)
+	addi $sp, $sp, 12
+
+	lw $s0, 0($sp)
+	lw $s1, 4($sp)
+	lw $s2, 8($sp)
+	lw $s3, 12($sp)
+	lw $s4, 16($sp)
+	lw $s5, 20($sp)
+	addi $sp, $sp, 24
+
+	jr $ra
+
+CheckSymmetric:
+
+	addi $sp, $sp, -24
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	sw $s2, 8($sp)
+	sw $s3, 12($sp)
+	sw $s4, 16($sp)
+	sw $s5, 20($sp)
+
+	add $s0, $0, $0		     		# i = 0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s1, $s1, $a0	     		# copy the address of the array to $s1
+				     		# lets use s3 for middle index of the array
+	div $s2, $a1, 2 	        	# s2 = size/2
+
+	sll $s3, $a1, 2		    		# s3 will be the last index of the array
+	addi $s3, $s3, -4
+	check_forSymmetry:
+
+		slt $s4, $0, $s2
+		beq $s4, $0, isSymmetric 	# when middle reaches 0 after loop, it means its symmetric
+
+		sll $s4, $s0, 2
+		add $s4, $s4, $s1		# $s4 will contain the address of first element
+		add $s7, $s3, $s1 		# $s7 will contain the address of the last element
+		lw $s5 , 0($s4)
+		lw $s6,  0($s7)
+
+		bne $s5, $s6, isNotSymmetric
+
+		addi $s0, $s0, 1  		# increment the first index
+		addi $s3, $s3, -4 		# decrement the last index
+		addi $s2, $s2, -1 		# decrement the middle
+		j check_forSymmetry
+
+	isSymmetric:
+	# 	li $v0, 1
+	#	I decided to print it to the console
+
+	 	li $v0, 4
+	 	la $a0, symmetric
+	 	syscall
+	 	j done
+
+	isNotSymmetric:
+	# 	li $v0, 0
+	#	I decided to print it to the console
+		li $v0, 4
+		la $a0, not_symmetric
+		syscall
+		j done
+	done:
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4
+
+	lw $s0, 0($sp)
+	lw $s1, 4($sp)
+	lw $s2, 8($sp)
+	lw $s3, 12($sp)
+	lw $s4, 16($sp)
+	lw $s5, 20($sp)
+	addi $sp, $sp, 24
+	jr $ra
+
+FindMinMax:
+	addi $s0, $0, 0				# initialize s0
+
+	addi $sp, $sp, -4	     		# add $a0 to the stack, we need to use it here
+	sw $a0, 0($sp)		     		# to access the elements
+
+	add $s2, $0, $a0
+	add $s1, $0, $0
+	lw $s6, 0($a0)				#initialize min and max
+	lw $s7, 0($a0)
+
+	loop2:
+	slt $s1, $s0, $a1
+	beq $s1, $0, exit2
+
+	sll $s5,$s0, 2				# $s5 = i*4 for byte address
+	add $s5, $s5, $s2			# address of array[i]
+
+	lw $s3, 0($s5)
+
+	checkMin:
+	slt $s4, $s3, $s6
+	bne $s4, $0, changeMin
+
+	checkMax:
+	slt $t4, $s7, $s3
+	bne $t4, $zero, changeMax
+
+	allchecked:
+	addi $s0, $s0, 1
+	j loop2
+
+	changeMax:
+	add $s6, $0, $s3
+	j allchecked
+
+	changeMin:
+	add $s7, $0, $s3
+	j checkMax
+
+	exit2:
+	add $v0, $s6, $0	# v0 is passed the max value
+	add $v1, $s7, $0	# v1 is passed the min value
+	lw $a0, 0($sp)
+	addi $sp, $sp, 4	# a0 has the base address
+	jr $ra
+
+emptyArray:
+	li $v0, 4
+	la $a0, empty
+	syscall
+	j quit
+
+
+Part 4:
+
+# Lab 2 Part 3
+# Hanyyev Suleyman, 21901009
+# Feb 21, Process Static Array
+
+.data
+	prompt: .asciiz "\nPlease enter the pattern, the number itself and the length consequently:   "
+	pattern: .asciiz "\nPattern: "
+	number: .asciiz "\nNumber:  "
+	result: .asciiz "\nResult:  "
+.text
+
+	li $v0,4
+	la $a0, prompt
+	syscall
+
+# Initialization
+	li $v0, 5
+	syscall
+	add $a0, $0, $v0
+
+	li $v0, 5
+	syscall
+	add $a1, $0, $v0
+
+	li $v0, 5
+	syscall
+	add $a2, $0, $v0
+
+	addi $t3,$0,32	#for bits
+
+# Redirecting to subprogram
+	jal subprogram
+
+# Subprogram returns into $v0, all is left is to print
+	add $t0, $0, $v0	# let the result be in t0 for a while
+	add $t1, $0, $a0	# let the pattern be there for a while
+
+	li $v0, 4
+	la $a0, pattern
+	syscall
+
+	move $a0, $t1
+	li $v0, 34
+	syscall
+
+	li $v0,4
+	la $a0, number
+	syscall
+
+	move $a0, $a1
+	li $v0,34
+	syscall
+
+	li $v0,4
+	la $a0, result
+	syscall
+
+	move $a0, $t0
+	li $v0,1
+	syscall
+
+# Subprogram did it's job now stop
+	quit:
+	li $v0,10
+	syscall
+
+
+
+subprogram:
+# Storing the s registers that will be used in the program to the stack
+	addi $sp, $sp, -24
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	sw $s2, 8($sp)
+	sw $s3, 12($sp)
+	sw $s4, 16($sp)
+	sw $s5, 20($sp)
+
+# reusing the s registers
+	add $s0, $0, $0 	# index for loop
+	add $s2, $0, $0		# count variable
+
+
+# do I need to save the values or shall i print them now ?
+	 addi $sp, $sp , -4
+	 sw $a0, 0($sp)
+	 sw $a1, 4($sp)
+
+# 32/ number will give us the number of times the loop has to iterate
+	div $t3, $a2
+	mflo $s1
+
+# the comparison loop
+	loop:
+	beq $s0,$s1, returnCount
+
+	add $s3, $0, $a1	# shift left 32 - size( i+1)
+	addi $s4, $s0, 1
+	mult $a2, $s4
+	mflo $s4
+	sub $s4, $t3, $s4
+
+	sllv $s3, $s3, $s4
+	sub $s5, $t3, $a2
+	srlv $s3, $s3, $s5
+
+	bne $s3, $a0, skip	# if they are not equal, then that bit sequence is not the pattern
+	addi $s2, $s2, 1
+
+	skip:
+	addi $s0, $s0, 1
+	j loop
+
+# Return the count to v0
+	returnCount:
+
+	add $v0, $s2, 0
+	lw $a1, 4($sp)
+	lw $a0, 0($sp)
+	lw $s0, 8($sp)
+	lw $s1, 12($sp)
+	lw $s2, 16($sp)
+	lw $s3, 20($sp)
+	lw $s4, 24($sp)
+	lw $s5, 28($sp)
+# Was this efficient way to do it, for loop would be possible as well, but I thought we have only limited amount of s registers to store so no need the for loop
+	addi $sp, $sp, 32
+	jr $ra
+
